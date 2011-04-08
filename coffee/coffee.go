@@ -7,10 +7,10 @@ import (
 )
 
 type Config struct {
-	RewardDry, RewardUserHasCoffee																float64
-	ProbGetWetUmbrella, ProbGetWetNoUmbrella, ProbMove, ProbDeliverCoffee, ProbKeepCoffeeNoOffice, ProbKeepCoffeeOffice, ProbFindUmbrella, ProbBuyCoffee	float64
-	ProbDrinkCoffee																		float64
-	DiscountFactor																		float64
+	RewardDry, RewardUserHasCoffee                                                                                                                       float64
+	ProbGetWetUmbrella, ProbGetWetNoUmbrella, ProbMove, ProbDeliverCoffee, ProbKeepCoffeeNoOffice, ProbKeepCoffeeOffice, ProbFindUmbrella, ProbBuyCoffee float64
+	ProbDrinkCoffee                                                                                                                                      float64
+	DiscountFactor                                                                                                                                       float64
 }
 
 func ConfigDefault() (cfg Config) {
@@ -29,7 +29,7 @@ func ConfigDefault() (cfg Config) {
 }
 
 const (
-	Move	= iota
+	Move = iota
 	BuyCoffee
 	GetUmbrella
 	DeliverCoffee
@@ -37,7 +37,7 @@ const (
 
 type Env struct {
 	*discrete.MDPEnvironment
-	mdp	*MDP
+	mdp *MDP
 }
 
 func NewEnv(cfg Config) (this *Env) {
@@ -47,8 +47,8 @@ func NewEnv(cfg Config) (this *Env) {
 	return
 }
 func (this *Env) EnvStart() (obs rlglue.Observation) {
-	startState := uint64(stat.NextRange(int64(this.mdp.GetTask().Obs.Ints.Count())))
-	obs = rlglue.NewObservation(this.mdp.GetTask().Obs.Ints.Values(startState), []float64{}, []byte{})
+	startState := discrete.State(stat.NextRange(int64(this.mdp.GetTask().Obs.Ints.Count())))
+	obs = rlglue.NewObservation(this.mdp.GetTask().Obs.Ints.Values(startState.Hashcode()), []float64{}, []byte{})
 	this.LastState = startState
 	return
 }

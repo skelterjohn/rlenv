@@ -3,6 +3,7 @@ package sysadmin
 import (
 	"fmt"
 	"go-glue.googlecode.com/hg/rlglue"
+	"go-glue.googlecode.com/hg/rltools"
 	"go-glue.googlecode.com/hg/rltools/discrete"
 )
 
@@ -13,11 +14,11 @@ func NewMDPEnvironment(cfg Config) (env rlglue.Environment) {
 }
 
 type SysMDP struct {
-	Cfg			Config
-	Task			*rlglue.TaskSpec
-	maxStates, maxActions	uint64
-	t			[][]float64
-	r			[]float64
+	Cfg                   Config
+	Task                  *rlglue.TaskSpec
+	maxStates, maxActions uint64
+	t                     [][]float64
+	r                     []float64
 }
 
 func NewSysMDP(Cfg Config) (this *SysMDP) {
@@ -29,25 +30,25 @@ func NewSysMDP(Cfg Config) (this *SysMDP) {
 	this.maxActions = this.Task.Act.Ints.Count()
 	this.t = make([][]float64, this.maxStates*this.maxActions)
 	this.r = make([]float64, this.maxStates*this.maxActions)
-	for s := uint64(0); s < this.maxStates; s++ {
-		for a := uint64(0); a < this.maxActions; a++ {
-			k := s + a*this.maxStates
+	for s := range this.S64() {
+		for a := range this.A64() {
+			k := s.Hashcode() + a.Hashcode()*this.maxStates
 			this.t[k] = make([]float64, this.maxStates)
 			this.r[k] = this.computeR(s, a)
-			for n := uint64(0); n < this.maxStates; n++ {
+			for n := range this.S64() {
 				this.t[k][n] = this.computeT(s, a, n)
 			}
 		}
 	}
 	return
 }
-func (this *SysMDP) computeT(s, a, n uint64) (p float64) {
-	sv := this.Task.Obs.Ints.Values(s)
-	nv := this.Task.Obs.Ints.Values(n)
+func (this *SysMDP) computeT(s discrete.State, a discrete.Action, n discrete.State) (p float64) {
+	sv := this.Task.Obs.Ints.Values(s.Hashcode())
+	nv := this.Task.Obs.Ints.Values(n.Hashcode())
 	p = 1
 	for i, no := range nv {
 		var fp float64
-		if a == uint64(i) {
+		if a == discrete.Action(i) {
 			fp = 0
 		} else {
 			fp = this.Cfg.FailBase
@@ -65,7 +66,7 @@ func (this *SysMDP) computeT(s, a, n uint64) (p float64) {
 				fp += this.Cfg.FailIncr
 			}
 		}
-		if sv[i] == 1 || a == uint64(i) {
+		if sv[i] == 1 || a == discrete.Action(i) {
 			if no == 0 {
 				p *= fp
 			} else {
@@ -81,8 +82,8 @@ func (this *SysMDP) computeT(s, a, n uint64) (p float64) {
 	}
 	return
 }
-func (this *SysMDP) computeR(s, a uint64) (r float64) {
-	sv := this.Task.Obs.Ints.Values(s)
+func (this *SysMDP) computeR(s discrete.State, a discrete.Action) (r float64) {
+	sv := this.Task.Obs.Ints.Values(s.Hashcode())
 	for _, v := range sv {
 		r += float64(v)
 	}
@@ -95,18 +96,30 @@ func (this *SysMDP) GetTask() (task *rlglue.TaskSpec) {
 	task = this.Task
 	return
 }
-func (this *SysMDP) S() uint64 {
+func (this *SysMDP) NumStates() uint64 {
 	return this.maxStates
 }
-func (this *SysMDP) A() uint64 {
+func (this *SysMDP) NumActions() uint64 {
 	return this.maxActions
 }
-func (this *SysMDP) T(s, a, n uint64) float64 {
-	k := s + a*this.maxStates
+func (this *SysMDP) S() <-chan rltools.State {
+	return discrete.AllStates(this.NumStates())
+}
+func (this *SysMDP) A() <-chan rltools.Action {
+	return discrete.AllActions(this.NumActions())
+}
+func (this *SysMDP) S64() <-chan discrete.State {
+	return discrete.AllStates64(this.NumStates())
+}
+func (this *SysMDP) A64() <-chan discrete.Action {
+	return discrete.AllActions64(this.NumActions())
+}
+func (this *SysMDP) T(s discrete.State, a discrete.Action, n discrete.State) float64 {
+	k := s.Hashcode() + a.Hashcode()*this.maxStates
 	return this.t[k][n]
 }
-func (this *SysMDP) R(s, a uint64) float64 {
-	k := s + a*this.maxStates
+func (this *SysMDP) R(s discrete.State, a discrete.Action) float64 {
+	k := s.Hashcode() + a.Hashcode()*this.maxStates
 	return this.r[k]
 }
 func (this *SysMDP) GetGamma() float64 {

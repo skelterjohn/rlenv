@@ -2,13 +2,15 @@ package coffee
 
 import (
 	"go-glue.googlecode.com/hg/rlglue"
+	"go-glue.googlecode.com/hg/rltools"
+	"go-glue.googlecode.com/hg/rltools/discrete"
 	"os"
 	"fmt"
 	"math"
 )
 
 const (
-	IndexInOffice	= iota
+	IndexInOffice = iota
 	IndexWet
 	IndexUmbrella
 	IndexRaining
@@ -17,12 +19,12 @@ const (
 )
 
 type MDP struct {
-	Cfg			Config
-	Task			*rlglue.TaskSpec
-	maxStates, maxActions	uint64
-	svs			[][]int32
-	t			[][]float64
-	r			[]float64
+	Cfg                   Config
+	Task                  *rlglue.TaskSpec
+	maxStates, maxActions uint64
+	svs                   [][]int32
+	t                     [][]float64
+	r                     []float64
 }
 
 func NewMDP(cfg Config) (this *MDP) {
@@ -41,19 +43,19 @@ func NewMDP(cfg Config) (this *MDP) {
 	}
 	this.t = make([][]float64, this.maxStates*this.maxActions)
 	this.r = make([]float64, this.maxStates*this.maxActions)
-	for s := uint64(0); s < this.maxStates; s++ {
-		for a := uint64(0); a < this.maxActions; a++ {
-			k := s + this.maxStates*a
+	for s := range this.S64() {
+		for a := range this.A64() {
+			k := s.Hashcode() + this.maxStates*a.Hashcode()
 			this.r[k] = this.computeR(s, a)
 			this.t[k] = make([]float64, this.maxStates)
 			sum := 0.0
-			for n := uint64(0); n < this.maxStates; n++ {
+			for n := range this.S64() {
 				this.t[k][n] = this.computeT(s, a, n)
 				sum += this.t[k][n]
 			}
 			if sum > 1 {
 				fmt.Fprintf(os.Stderr, "%v %v\n", this.svs[s], a)
-				for n := uint64(0); n < this.maxStates; n++ {
+				for n := range this.S64() {
 					if this.t[k][n] != 0 {
 						fmt.Fprintf(os.Stderr, "\t%v : %v\n", this.svs[n], this.t[k][n])
 					}
@@ -63,7 +65,7 @@ func NewMDP(cfg Config) (this *MDP) {
 	}
 	return
 }
-func (this *MDP) computeR(s, a uint64) (r float64) {
+func (this *MDP) computeR(s discrete.State, a discrete.Action) (r float64) {
 	sv := this.svs[s]
 	Wet := sv[IndexWet] == 1
 	UserHasCoffee := sv[IndexUserHasCoffee] == 1
@@ -75,7 +77,7 @@ func (this *MDP) computeR(s, a uint64) (r float64) {
 	}
 	return
 }
-func (this *MDP) computeT(s, a, n uint64) (p float64) {
+func (this *MDP) computeT(s discrete.State, a discrete.Action, n discrete.State) (p float64) {
 	sv := this.svs[s]
 	nv := this.svs[n]
 	same := func(f bool) (p float64) {
@@ -208,18 +210,30 @@ func (this *MDP) GetTask() (task *rlglue.TaskSpec) {
 	task = this.Task
 	return
 }
-func (this *MDP) S() uint64 {
+func (this *MDP) NumStates() uint64 {
 	return this.maxStates
 }
-func (this *MDP) A() uint64 {
+func (this *MDP) NumActions() uint64 {
 	return this.maxActions
 }
-func (this *MDP) T(s, a, n uint64) float64 {
-	k := s + a*this.maxStates
+func (this *MDP) S() <-chan rltools.State {
+	return discrete.AllStates(this.maxStates)
+}
+func (this *MDP) A() <-chan rltools.Action {
+	return discrete.AllActions(this.maxActions)
+}
+func (this *MDP) S64() <-chan discrete.State {
+	return discrete.AllStates64(this.maxStates)
+}
+func (this *MDP) A64() <-chan discrete.Action {
+	return discrete.AllActions64(this.maxActions)
+}
+func (this *MDP) T(s discrete.State, a discrete.Action, n discrete.State) float64 {
+	k := s.Hashcode() + a.Hashcode()*this.maxStates
 	return this.t[k][n]
 }
-func (this *MDP) R(s, a uint64) float64 {
-	k := s + a*this.maxStates
+func (this *MDP) R(s discrete.State, a discrete.Action) float64 {
+	k := s.Hashcode() + a.Hashcode()*this.maxStates
 	return this.r[k]
 }
 func (this *MDP) GetGamma() float64 {

@@ -7,10 +7,10 @@ import (
 )
 
 type OptAgent struct {
-	Cfg	Config
-	task	*rlglue.TaskSpec
-	mdp	discrete.MDP
-	qt	*discrete.QTable
+	Cfg  Config
+	task *rlglue.TaskSpec
+	mdp  discrete.MDP
+	qt   *discrete.QTable
 }
 
 func NewOptAgent(Cfg Config) (this *OptAgent) {
@@ -26,13 +26,13 @@ func (this *OptAgent) AgentInit(taskString string) {
 	vi.ValueIteration(this.qt, this.mdp, 0.1)
 }
 func (this *OptAgent) AgentStart(obs rlglue.Observation) (act rlglue.Action) {
-	s := this.task.Obs.Ints.Index(obs.Ints())
+	s := discrete.State(this.task.Obs.Ints.Index(obs.Ints()))
 	a := this.qt.Pi(s)
 	act = rlglue.NewAction([]int32{int32(a)}, []float64{}, []byte{})
 	return
 }
 func (this *OptAgent) AgentStep(reward float64, obs rlglue.Observation) (act rlglue.Action) {
-	s := this.task.Obs.Ints.Index(obs.Ints())
+	s := discrete.State(this.task.Obs.Ints.Index(obs.Ints()))
 	a := this.qt.Pi(s)
 	act = rlglue.NewAction([]int32{int32(a)}, []float64{}, []byte{})
 	return

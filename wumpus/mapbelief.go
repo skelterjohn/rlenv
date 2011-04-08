@@ -7,12 +7,12 @@ import (
 
 const (
 	Unknown = 0
-	Empty = 1 << iota
-	Breezy 
+	Empty   = 1 << iota
+	Breezy
 	Stinky
 	Pit
 	Wumpus
-	
+
 	PPit = .2
 )
 
@@ -35,7 +35,7 @@ func GetIndex(status int32) int32 {
 }
 func GetValue(index int32) int32 {
 	return int32(SquareMapToValue[index])
-}	
+}
 
 func flip(p float64) bool {
 	return p > stat.NextUniform()
@@ -99,7 +99,7 @@ func (this MapBelief) AdjacentFlag(x, y int, f int32) (known, set bool) {
 			}
 		}
 	}
-	return 
+	return
 }
 func (this MapBelief) AdjacentStinky(x, y int) (known bool, count int) {
 
@@ -147,8 +147,8 @@ func (this MapBelief) AdjacentStinky(x, y int) (known bool, count int) {
 			}
 		}
 	}
-	
-	return 
+
+	return
 }
 
 func (this MapBelief) IsPit(x, y int) bool {
@@ -169,8 +169,8 @@ func (this MapBelief) CanBeWumpus(x, y int) (canBeWumpus bool) {
 }
 
 func (this MapBelief) IsPitConsistent(truth MapBelief) bool {
-	for x:=0; x<4; x++ {
-		for y:=0; y<4; y++ {
+	for x := 0; x < 4; x++ {
+		for y := 0; y < 4; y++ {
 			if this.GetFlag(x, y, Breezy) {
 				_, pit := truth.AdjacentFlag(x, y, Pit)
 				if !pit {
@@ -184,7 +184,7 @@ func (this MapBelief) IsPitConsistent(truth MapBelief) bool {
 
 func (this MapBelief) SampleWorld() (truth MapBelief, rejects int) {
 	truth = make(MapBelief, 16)
-	
+
 	var wumpusLocs []int
 	smellCount := 0
 	anySmell := false
@@ -193,19 +193,19 @@ func (this MapBelief) SampleWorld() (truth MapBelief, rejects int) {
 			anySmell = true
 			smellCount++
 		}
-		if v & Wumpus != 0 {
+		if v&Wumpus != 0 {
 			wumpusLocs = []int{k}
 		}
 	}
-	
+
 	if len(wumpusLocs) == 0 {
-		for x:=0; x<4; x++ {
-			for y:=0; y<4; y++ {
+		for x := 0; x < 4; x++ {
+			for y := 0; y < 4; y++ {
 				if x == 0 && y == 0 {
 					continue
 				}
 				known, c := this.AdjacentStinky(x, y)
-				if (anySmell && known && c==smellCount) || (!anySmell && !known) {
+				if (anySmell && known && c == smellCount) || (!anySmell && !known) {
 					wumpusLocs = append(wumpusLocs, x+4*y)
 				}
 			}
@@ -216,16 +216,16 @@ func (this MapBelief) SampleWorld() (truth MapBelief, rejects int) {
 		for i := range truth {
 			truth[i] = 0
 		}
-		for x:=0; x<4; x++ {
-			for y:=0; y<4; y++ {
-				k := x+y*4
+		for x := 0; x < 4; x++ {
+			for y := 0; y < 4; y++ {
+				k := x + y*4
 				if k == 0 {
 					continue
 				}
 				if this[k] != 0 {
 					truth[k] = this[k]
 				} else {
-					if this.IsPit(x, y) || (this.CanBePit(x, y) && flip(.2)){
+					if this.IsPit(x, y) || (this.CanBePit(x, y) && flip(.2)) {
 						truth.SetFlag(x, y, Pit)
 						truth.SetAdjacent(x, y, Breezy)
 					}
@@ -238,25 +238,22 @@ func (this MapBelief) SampleWorld() (truth MapBelief, rejects int) {
 		rejects++
 	}
 	wk := wumpusLocs[stat.NextRange(int64(len(wumpusLocs)))]
-	x := wk%4
-	y := wk/4
+	x := wk % 4
+	y := wk / 4
 	truth.SetFlag(x, y, Wumpus)
 	truth.SetAdjacent(x, y, Stinky)
-	
+
 	for k, v := range this {
 		if v != 0 {
 			truth[k] = v
 		}
 	}
-	
+
 	for k, v := range truth {
 		if v == 0 {
 			truth[k] = Empty
 		}
 	}
-	
+
 	return
 }
-
-
-

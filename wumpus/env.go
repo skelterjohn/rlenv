@@ -10,8 +10,8 @@ import (
 )
 
 type Env struct {
-	hunter		Hunter
-	observed	MapBelief
+	hunter   Hunter
+	observed MapBelief
 }
 
 func New() (this *Env) {

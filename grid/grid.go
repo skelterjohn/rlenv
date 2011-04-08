@@ -15,10 +15,10 @@ func (c Cell) Equals(o Cell) bool {
 }
 
 type Env struct {
-	Pos		Cell
-	Start		Cell
-	Goal		Cell
-	Width, Height	int32
+	Pos           Cell
+	Start         Cell
+	Goal          Cell
+	Width, Height int32
 }
 
 func New(width, height int32) (ge *Env) {

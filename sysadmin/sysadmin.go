@@ -11,10 +11,10 @@ import (
 var count int
 
 type Config struct {
-	FailBase, FailIncr	float64
-	FailStay, StartBoot	float64
-	NumSystems		int
-	DiscountFactor		float64
+	FailBase, FailIncr  float64
+	FailStay, StartBoot float64
+	NumSystems          int
+	DiscountFactor      float64
 }
 
 func ConfigDefault() (cfg Config) {
@@ -28,10 +28,10 @@ func ConfigDefault() (cfg Config) {
 }
 
 type Environment struct {
-	task	*rlglue.TaskSpec
-	cfg	Config
-	status	[]bool
-	hash	uint64
+	task   *rlglue.TaskSpec
+	cfg    Config
+	status []bool
+	hash   uint64
 }
 
 func New(cfg Config) (this *Environment) {

@@ -12,8 +12,8 @@ var task, _ = rlglue.ParseTaskSpec(taskstr)
 
 type Belief struct {
 	Hunter
-	term	bool
-	hash	uint64
+	term bool
+	hash uint64
 }
 
 func NewBelief(mb MapBelief) (this *Belief) {
@@ -30,7 +30,7 @@ func (this *Belief) Hashcode() uint64 {
 func (this *Belief) LessThan(oi interface{}) bool {
 	return this.hash < oi.(*Belief).hash
 }
-func (this *Belief) Next(action uint64) (o discrete.Oracle, r float64) {
+func (this *Belief) Next(action discrete.Action) (o discrete.Oracle, r float64) {
 	var nexthunter Hunter
 	var t bool
 	switch action {
@@ -50,14 +50,14 @@ func (this *Belief) Next(action uint64) (o discrete.Oracle, r float64) {
 		return
 	}
 	ob := &Belief{Hunter: nexthunter, term: false}
-	ob.hash = ob.GetState()
+	ob.hash = ob.GetState().Hashcode()
 	o = ob
 	return
 }
 func (this *Belief) Terminal() bool {
 	return this.term
 }
-func (this *Belief) Update(action uint64, state uint64, reward float64) (next bayes.BeliefState) {
+func (this *Belief) Update(action discrete.Action, state discrete.State, reward float64) (next bayes.BeliefState) {
 	nb := new(Belief)
 	*nb = *this
 	nb.belief = append(MapBelief{}, this.belief...)
@@ -65,12 +65,12 @@ func (this *Belief) Update(action uint64, state uint64, reward float64) (next ba
 	next = nb
 	return
 }
-func (this *Belief) UpdateTerminal(action uint64, reward float64) (next bayes.BeliefState) {
+func (this *Belief) UpdateTerminal(action discrete.Action, reward float64) (next bayes.BeliefState) {
 	return this
 }
-func (this *Belief) Teleport(state uint64) {
-	this.hash = state
-	indices := task.Obs.Ints.Values(state)
+func (this *Belief) Teleport(state discrete.State) {
+	this.hash = state.Hashcode()
+	indices := task.Obs.Ints.Values(state.Hashcode())
 	for i, ii := range indices[3:] {
 		indices[i+3] = GetValue(ii)
 	}
@@ -80,7 +80,7 @@ func (this *Belief) Teleport(state uint64) {
 	this.belief = indices[3:]
 	return
 }
-func (this *Belief) GetState() uint64 {
+func (this *Belief) GetState() discrete.State {
 	values := make([]int32, len(task.Obs.Ints))
 	values[0] = this.x
 	values[1] = this.y
@@ -88,5 +88,5 @@ func (this *Belief) GetState() uint64 {
 	for i, v := range this.belief {
 		values[i+3] = GetIndex(v)
 	}
-	return task.Obs.Ints.Index(values)
+	return discrete.State(task.Obs.Ints.Index(values))
 }

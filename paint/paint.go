@@ -20,8 +20,8 @@ func ConfigDefault() (cfg Config) {
 
 type Can struct{ Painted, Polished, Scratched, Done bool }
 type Env struct {
-	Cans	[]Can
-	Live	bool
+	Cans []Can
+	Live bool
 }
 
 func New(cfg Config) (this *Env) {
@@ -169,9 +169,9 @@ func (this *Env) EnvMessage(message string) (reply string) {
 
 type Oracle struct {
 	Env
-	isTerminal	bool
-	Task		*rlglue.TaskSpec
-	hash		uint64
+	isTerminal bool
+	Task       *rlglue.TaskSpec
+	hash       uint64
 }
 
 func NewOracle(env Env) (this *Oracle) {
@@ -195,8 +195,8 @@ func (this *Oracle) LessThan(other interface{}) bool {
 	oo := other.(*Oracle)
 	return this.Hashcode() < oo.Hashcode()
 }
-func (this *Oracle) Next(action uint64) (o discrete.Oracle, r float64) {
-	avalues := this.Task.Act.Ints.Values(action)
+func (this *Oracle) Next(action discrete.Action) (o discrete.Oracle, r float64) {
+	avalues := this.Task.Act.Ints.Values(action.Hashcode())
 	act := rlglue.NewAction(avalues, []float64{}, []byte{})
 	next := new(Oracle)
 	*next = *this
@@ -209,7 +209,7 @@ func (this *Oracle) Next(action uint64) (o discrete.Oracle, r float64) {
 func (this *Oracle) Terminal() bool {
 	return this.isTerminal
 }
-func (this *Oracle) Update(action, state uint64, reward float64) (next bayes.BeliefState) {
+func (this *Oracle) Update(action discrete.Action, state discrete.State, reward float64) (next bayes.BeliefState) {
 	no := new(Oracle)
 	*no = *this
 	no.Cans = append([]Can{}, this.Cans...)
@@ -217,19 +217,19 @@ func (this *Oracle) Update(action, state uint64, reward float64) (next bayes.Bel
 	next = no
 	return
 }
-func (this *Oracle) UpdateTerminal(action uint64, reward float64) (next bayes.BeliefState) {
+func (this *Oracle) UpdateTerminal(action discrete.Action, reward float64) (next bayes.BeliefState) {
 	return this
 }
-func (this *Oracle) Teleport(state uint64) {
-	ints := this.Task.Obs.Ints.Values(state)
+func (this *Oracle) Teleport(state discrete.State) {
+	ints := this.Task.Obs.Ints.Values(state.Hashcode())
 	for i := range this.Cans {
 		this.Cans[i].Painted = ints[i*4] == 1
 		this.Cans[i].Polished = ints[i*4+1] == 1
 		this.Cans[i].Scratched = ints[i*4+2] == 1
 		this.Cans[i].Done = ints[i*4+3] == 1
 	}
-	this.hash = state
+	this.hash = state.Hashcode()
 }
-func (this *Oracle) GetState() (state uint64) {
-	return this.hash
+func (this *Oracle) GetState() (state discrete.State) {
+	return discrete.State(this.hash)
 }

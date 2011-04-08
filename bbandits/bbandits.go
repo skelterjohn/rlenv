@@ -13,11 +13,11 @@ import (
 )
 
 type Belief struct {
-	counts		[]float64
-	totals		[]float64
-	visitOffset	[]float64
-	M		uint64
-	hash		uint64
+	counts      []float64
+	totals      []float64
+	visitOffset []float64
+	M           uint64
+	hash        uint64
 }
 
 func NewBelief(alphas, betas []float64) (this *Belief) {
@@ -58,7 +58,7 @@ func (this *Belief) LessThan(other interface{}) bool {
 	}
 	return false
 }
-func (this *Belief) Next(c uint64) (o discrete.Oracle, r float64) {
+func (this *Belief) Next(c discrete.Action) (o discrete.Oracle, r float64) {
 	visits := this.totals[c] - this.visitOffset[c]
 	if this.M != 0 && uint64(visits) >= this.M {
 		o = this
@@ -84,15 +84,15 @@ func (this *Belief) Next(c uint64) (o discrete.Oracle, r float64) {
 	o = next
 	return
 }
-func (this *Belief) Teleport(state uint64) {
+func (this *Belief) Teleport(state discrete.State) {
 }
 func (this *Belief) Terminal() bool {
 	return false
 }
-func (this *Belief) GetState() uint64 {
+func (this *Belief) GetState() discrete.State {
 	return 0
 }
-func (this *Belief) Update(action uint64, state uint64, reward float64) (nextb bayes.BeliefState) {
+func (this *Belief) Update(action discrete.Action, state discrete.State, reward float64) (nextb bayes.BeliefState) {
 	visits := this.totals[action] - this.visitOffset[action]
 	if this.M != 0 && uint64(visits) >= this.M {
 		return this
@@ -112,15 +112,15 @@ func (this *Belief) Update(action uint64, state uint64, reward float64) (nextb b
 	nextb = next
 	return
 }
-func (this *Belief) UpdateTerminal(action uint64, reward float64) (next bayes.BeliefState) {
+func (this *Belief) UpdateTerminal(action discrete.Action, reward float64) (next bayes.BeliefState) {
 	next = this
 	return
 }
 
 type Env struct {
-	numActions	int
-	belief		*Belief
-	obs		rlglue.Observation
+	numActions int
+	belief     *Belief
+	obs        rlglue.Observation
 }
 
 func NewEnv(belief *Belief) (this *Env) {
@@ -142,7 +142,7 @@ func (this *Env) EnvStart() (obs rlglue.Observation) {
 func (this *Env) EnvStep(action rlglue.Action) (obs rlglue.Observation, r float64, t bool) {
 	obs = this.obs
 	var o discrete.Oracle
-	a := uint64(action.Ints()[0])
+	a := discrete.Action(action.Ints()[0])
 	o, r = this.belief.Next(a)
 	this.belief = o.(*Belief)
 	t = false
