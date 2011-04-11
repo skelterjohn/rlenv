@@ -2,15 +2,15 @@ package sysadmin
 
 import (
 	"go-glue.googlecode.com/hg/rlglue"
-	"go-glue.googlecode.com/hg/rlalg/vi"
+	"github.com/skelterjohn/rlalg/vi"
 	"go-glue.googlecode.com/hg/rltools/discrete"
 )
 
 type OptAgent struct {
-	Cfg  Config
-	task *rlglue.TaskSpec
-	mdp  discrete.MDP
-	qt   *discrete.QTable
+	Cfg	Config
+	task	*rlglue.TaskSpec
+	mdp	discrete.MDP
+	qt	*discrete.QTable
 }
 
 func NewOptAgent(Cfg Config) (this *OptAgent) {

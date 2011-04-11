@@ -2,7 +2,7 @@ package sysadmin
 
 import (
 	"go-glue.googlecode.com/hg/rlglue"
-	"go-glue.googlecode.com/hg/rlalg/bfs3"
+	"github.com/skelterjohn/rlalg/bfs3"
 	"github.com/skelterjohn/rlbayes"
 	"go-glue.googlecode.com/hg/rltools/discrete"
 )
